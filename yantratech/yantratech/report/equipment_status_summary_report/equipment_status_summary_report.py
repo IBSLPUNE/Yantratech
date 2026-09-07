@@ -40,16 +40,15 @@ def get_columns():
         {"label": "Check List", "fieldname": "name", "fieldtype": "Link", "options": "Check List", "width": 160},
         {"label": "Serial No", "fieldname": "hoist_serial_no", "fieldtype": "Data", "width": 140},
         {"label": "Customer", "fieldname": "customer_name", "fieldtype": "Data", "width": 220},
-        {"label": "Region", "fieldname": "region", "fieldtype": "Data", "width": 120},
+        {"label": "Region", "fieldname": "regions", "fieldtype": "Data", "width": 120},
         {"label": "Person", "fieldname": "contact_person", "fieldtype": "Data", "width": 120},
         {"label": "Branch", "fieldname": "name_of_person", "fieldtype": "Data", "width": 120},
         {"label": "City", "fieldname": "city", "fieldtype": "Data", "width": 120},
         
         {"label": "Check List Type", "fieldname": "check_list_type", "fieldtype": "Data", "width": 120},
         
-        {"label": "Hoist Capacity", "fieldname": "hoist_capacity", "fieldtype": "Data", "width": 120},
+        {"label": "Capacity", "fieldname": "capacity", "fieldtype": "Data", "width": 120},
         {"label": "Brand", "fieldname": "brand", "fieldtype": "Data", "width": 120},
-        # {"label": "Item/Model", "fieldname": "model", "fieldtype": "Data", "width": 120},
         
         {"label": "Model", "fieldname": "item", "fieldtype": "Data", "width": 150},
 
@@ -90,7 +89,15 @@ def get_columns():
 
         {"label": "Sales Invoice No", "fieldname": "sales_invoice", "fieldtype": "Link", "options": "Sales Invoice", "width": 170},
         {"label": "Sales Invoice Date", "fieldname": "invoice_date", "fieldtype": "Date", "width": 120},
-        {"label": "No. of Days", "fieldname": "no_of_days", "fieldtype": "Int", "width": 110},
+        {"label": "Next Due Days", "fieldname": "no_of_days", "fieldtype": "Int", "width": 110},
+        
+        {"label": "CL-Received", "fieldname": "cl_received", "fieldtype": "Int", "width": 120},
+        {"label": "Qtn-CL", "fieldname": "qtn_cl", "fieldtype": "Int", "width": 120},
+        {"label": "PO-Qtn", "fieldname": "po_qtn", "fieldtype": "Int", "width": 120},
+        {"label": "SO-PO", "fieldname": "so_po", "fieldtype": "Int", "width": 120},
+        {"label": "DN-PO", "fieldname": "dn_po", "fieldtype": "Int", "width": 120},
+        {"label": "SINV-PO", "fieldname": "sinv_po", "fieldtype": "Int", "width": 120},
+        
         
         {"label": "Current Status", "fieldname": "current_status", "fieldtype": "Data", "width": 140},
     ]
@@ -107,9 +114,9 @@ def get_data():
             "customer_name",
             "check_list_type",
             "stock_entry_id",
-            "region",
+            "regions",
             "name_of_person",
-            "hoist_capacity",
+            "capacity",
             "contact_person",
             "city",
             "date",
@@ -179,52 +186,8 @@ def get_data():
                 row["quotation"] = quotation.name
                 row["quotation_date"] = quotation.transaction_date
                 row["quotation_status"] = quotation.status
+             
                 
-        # # -------------------- Sales Order --------------------
-
-        # row["sales_order"] = ""
-        # row["so_date"] = ""
-        # row["po_no"] = ""
-        # row["po_date"] = ""
-
-        # if row.get("quotation"):
-
-        #     quotation_items = frappe.get_all(
-        #         "Quotation Item",
-        #         filters={"parent": row["quotation"]},
-        #         fields=["name"]
-        #     )
-
-        #     if quotation_items:
-
-        #         quotation_item_names = [d.name for d in quotation_items]
-
-        #         so_item = frappe.get_all(
-        #             "Sales Order Item",
-        #             filters={
-        #                 "quotation_item": ["in", quotation_item_names]
-        #             },
-        #             fields=["parent"],
-        #             limit=1
-        #         )
-
-        #         if so_item:
-
-        #             sales_order = frappe.db.get_value(
-        #                 "Sales Order",
-        #                 so_item[0].parent,
-        #                 ["name", "transaction_date", "po_no"],
-        #                 as_dict=True
-        #             )
-
-        #             if sales_order:
-        #                 row["sales_order"] = sales_order.name
-        #                 row["so_date"] = sales_order.transaction_date
-        #                 row["po_no"] = sales_order.po_no
-        #                 row["po_date"] = sales_order.po_date
-        
-        
-        
         # -------------------- Sales Order --------------------
 
         row["sales_order"] = ""
@@ -335,6 +298,69 @@ def get_data():
             if sales_invoice:
                 row["sales_invoice"] = sales_invoice.name
                 row["invoice_date"] = sales_invoice.posting_date
+                
+                
+                
+        # -------------------- Date Difference Calculations --------------------
+
+            # CL-Received = CL Date - Received Date
+            if row.get("date") and row.get("received_dt"):
+                row["cl_received"] = date_diff(
+                    row["date"],
+                    row["received_dt"]
+                )
+            else:
+                row["cl_received"] = None
+
+
+            # Qtn-CL = Quotation Date - CL Date
+            if row.get("quotation_date") and row.get("date"):
+                row["qtn_cl"] = date_diff(
+                    row["quotation_date"],
+                    row["date"]
+                )
+            else:
+                row["qtn_cl"] = None
+
+
+            # PO-Qtn = PO Date - Quotation Date
+            if row.get("po_date") and row.get("quotation_date"):
+                row["po_qtn"] = date_diff(
+                    row["po_date"],
+                    row["quotation_date"]
+                )
+            else:
+                row["po_qtn"] = None
+
+
+            # SO-PO = SO Date - PO Date
+            if row.get("so_date") and row.get("po_date"):
+                row["so_po"] = date_diff(
+                    row["so_date"],
+                    row["po_date"]
+                )
+            else:
+                row["so_po"] = None
+
+
+            # DN-PO = Delivery Date - PO Date
+            if row.get("delivery_date") and row.get("po_date"):
+                row["dn_po"] = date_diff(
+                    row["delivery_date"],
+                    row["po_date"]
+                )
+            else:
+                row["dn_po"] = None
+
+
+            # SINV-PO = Sales Invoice Date - PO Date
+            if row.get("invoice_date") and row.get("po_date"):
+                row["sinv_po"] = date_diff(
+                    row["invoice_date"],
+                    row["po_date"]
+                )
+            else:
+                row["sinv_po"] = None
 
         # -------------------- Current Status --------------------
 

@@ -1,8 +1,8 @@
 {
- "add_total_row": 1,
+ "add_total_row": 0,
  "add_translate_data": 0,
  "columns": [],
- "creation": "2026-07-28 15:19:01.911406",
+ "creation": "2026-09-07 09:51:27.685342",
  "disable_prepared_report_automation": 0,
  "disabled": 0,
  "docstatus": 0,
@@ -12,16 +12,20 @@
  "idx": 0,
  "is_standard": "Yes",
  "letter_head": null,
- "modified": "2026-08-19 16:28:17.501868",
+ "modified": "2026-09-07 10:10:09.859222",
  "modified_by": "Administrator",
  "module": "Yantratech",
- "name": "New Check List  Report",
+ "name": "Equipment Status Summary Report",
  "owner": "Administrator",
  "prepared_report": 0,
  "ref_doctype": "Check List",
- "report_name": "New Check List  Report",
+ "report_name": "Equipment Status Summary Report",
  "report_type": "Script Report",
- "roles": [],
+ "roles": [
+  {
+   "role": "System Manager"
+  }
+ ],
  "snapshot_report": 0,
  "timeout": 0
 }
