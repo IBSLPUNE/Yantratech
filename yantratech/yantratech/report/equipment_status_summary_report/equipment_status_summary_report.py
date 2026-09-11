@@ -31,7 +31,7 @@ def get_columns():
         },
         {
             "label": "Region",
-            "fieldname": "regions",
+            "fieldname": "region",
             "fieldtype": "Data",
             "width": 120,
         },
@@ -160,6 +160,13 @@ def get_columns():
             "fieldname": "stock_entry",
             "fieldtype": "Link",
             "options": "Stock Entry",
+            "width": 170,
+        },
+        {
+            "label": "Warehouse",
+            "fieldname": "warehouse",
+            "fieldtype": "Link",
+            "options": "Warehouse",
             "width": 170,
         },
         {
@@ -372,7 +379,7 @@ def get_data():
             "customer_name",
             "check_list_type",
             "stock_entry_id",
-            "regions",
+            "region",
             "name_of_person",
             "capacity",
             "contact_person",
@@ -412,6 +419,7 @@ def get_data():
         # -------------------- Stock Entry --------------------
 
         row["stock_entry"] = ""
+        row["warehouse"] = ""
         row["stock_entry_date"] = ""
         row["stn_date"] = ""
         row["received_at_yt"] = ""
@@ -423,6 +431,7 @@ def get_data():
                 cl.stock_entry_id,
                 [
                     "name",
+                    "to_warehouse",
                     "posting_date",
                     "custom_stn_date",
                     "custom_received_dt",
@@ -432,6 +441,7 @@ def get_data():
 
             if se:
                 row["stock_entry"] = se.name
+                row["warehouse"] = se.to_warehouse
                 row["stock_entry_date"] = se.posting_date
                 row["stn_date"] = se.custom_stn_date
                 row["received_at_yt"] = se.custom_received_dt
