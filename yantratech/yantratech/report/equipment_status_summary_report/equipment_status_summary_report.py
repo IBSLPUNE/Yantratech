@@ -473,6 +473,53 @@ def get_data():
                 row["quotation_date"] = quotation.transaction_date
                 row["quotation_status"] = quotation.status
 
+                # ============================================================
+                # SPARE AMOUNT & SERVICE AMOUNT FROM QUOTATION ITEMS
+                # ============================================================
+
+                spare_amount = 0
+                service_amount = 0
+
+                # Fetch Amount (INR) from linked Quotation Items
+                quotation_items_for_amount = frappe.get_all(
+                    "Quotation Item",
+                    filters={
+                        "parent": row["quotation"]
+                    },
+                    fields=[
+                        "item_code",
+                        "amount"
+                    ]
+                )
+
+                for item in quotation_items_for_amount:
+
+                    # Amount from Quotation Item
+                    amount = frappe.utils.flt(item.amount)
+
+                    # Maintain Stock (is_stock_item) from Item Master
+                    is_stock_item = 0
+
+                    if item.item_code:
+                        is_stock_item = frappe.db.get_value(
+                            "Item",
+                            item.item_code,
+                            "is_stock_item"
+                        ) or 0
+
+                    # Maintain Stock TICKED = Spare Amount
+                    if is_stock_item:
+                        spare_amount += amount
+
+                    # Maintain Stock UNTICKED = Service Amount
+                    else:
+                        service_amount += amount
+
+                # Set calculated values
+                row["spare_amount"] = spare_amount
+                row["service_amount"] = service_amount
+                row["total_amount"] = spare_amount + service_amount
+
         # -------------------- Sales Order --------------------
 
         row["sales_order"] = ""
@@ -484,7 +531,9 @@ def get_data():
 
             quotation_items = frappe.get_all(
                 "Quotation Item",
-                filters={"parent": row["quotation"]},
+                filters={
+                    "parent": row["quotation"]
+                },
                 fields=["name"]
             )
 
@@ -526,35 +575,6 @@ def get_data():
                         row["so_date"] = sales_order.transaction_date
                         row["po_no"] = sales_order.po_no
                         row["po_date"] = sales_order.po_date
-
-                        # -------------------- Service / Spare Amount --------------------
-
-                        sales_order_items = frappe.get_all(
-                            "Sales Order Item",
-                            filters={
-                                "parent": sales_order.name
-                            },
-                            fields=[
-                                "amount",
-                                "is_stock_item",
-                            ]
-                        )
-
-                        spare_amount = 0
-                        service_amount = 0
-
-                        for item in sales_order_items:
-
-                            if item.is_stock_item:
-                                spare_amount += item.amount or 0
-                            else:
-                                service_amount += item.amount or 0
-
-                        row["spare_amount"] = spare_amount
-                        row["service_amount"] = service_amount
-                        row["total_amount"] = (
-                            spare_amount + service_amount
-                        )
 
         # -------------------- Delivery Note --------------------
 
